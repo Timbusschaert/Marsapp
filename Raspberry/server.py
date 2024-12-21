@@ -3,21 +3,31 @@ import json
 import random
 import schedule
 import time
-from src.MCP3008 import MCP3008Reader
+import os
+from src.MCP3008 import MCP3008
 from src.MySQLHelper import MySQLHelper
 from src.DHT22 import DHT22Reader
 from src.SIM900 import SIM900  # Ajouter un module pour envoyer des SMS
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-mcp_reader_light = MCP3008Reader(0)
-mcp_reader_ground = MCP3008Reader(1)
+mcp_reader_light = MCP3008()
+mcp_reader_light.open()
+
+mcp_reader_ground = MCP3008()
+mcp_reader_ground.open()
 mcp_reader_temp_hum = DHT22Reader(4)
 
 # Charger les configurations depuis le fichier JSON
-with open('config/config.json', 'r') as config_file:
+with open('/home/tim/Documents/didier/Raspberry/config/config.json', 'r') as config_file:
     config_data = json.load(config_file)
 
+<<<<<<< HEAD
+=======
+dir_path = os.path.dirname(os.path.realpath(__file__))
+config_path = os.path.join(dir_path, 'config', 'config.json')
+# Configuration de la base de données
+>>>>>>> 06f1725 (original push)
 db_config = config_data["db"]
 temperature_limit = config_data.get("temperature_limit", 30)  
 sms_recipient = config_data.get("sms_recipient", "+32479647787")  
@@ -75,7 +85,7 @@ def read_and_insert_sensor_data():
     except Exception as e:
         print(f"Erreur lors du traitement des donnees des capteurs : {e}")
 # Planificateur pour appeler la fonction toutes les 5 secondes
-schedule.every(5).seconds.do(read_and_insert_sensor_data)
+schedule.every(60).seconds.do(read_and_insert_sensor_data)
 
 def run_schedule():
     while True:
@@ -85,6 +95,7 @@ def run_schedule():
 def read_sensor_data():
     try:
         # Simuler la lecture des capteurs
+<<<<<<< HEAD
         temperature, humidity = mcp_reader_temp_hum.read_data()
         light = mcp_reader_light.read_value()
         ground = mcp_reader_ground.read_value()
@@ -93,13 +104,29 @@ def read_sensor_data():
         humidity += random.uniform(0.0, 2.0)
         light += random.uniform(0.0, 2.0)
 
+=======
+ 
+        # Lire la valeur analogique
+        humidity,temperature = mcp_reader_temp_hum.read_data()
+        light = mcp_reader_light.read(1)
+        ground = mcp_reader_ground.read(0)
+
+        temperature = temperature 
+        humidity = humidity 
+        light = ground 
+        # Construire un dictionnaire avec les données
+>>>>>>> 06f1725 (original push)
         sensor_data = {
             "temperature": temperature,
             "humidity": humidity,
             "light": light,
             "ground": ground
         }
+<<<<<<< HEAD
 
+=======
+        print("Sensor data:", sensor_data)
+>>>>>>> 06f1725 (original push)
         # Convertir le dictionnaire en format JSON
         json_data = json.dumps(sensor_data)
         return json_data
@@ -136,7 +163,11 @@ def get_values_of_month():
                 DAYOFMONTH(timestamp) AS day,
                 AVG(temperature) AS avg_temperature,
                 AVG(humidity) AS avg_humidity,
-                AVG(lux) AS avg_lux
+                AVG(lux) AS avg_lux,
+		MAX(temperature) AS max_temperature,
+		MIN(temperature) AS min_temperature,
+		MAX(humidity) AS max_humidity,
+		MIN(humidity) AS min_humidity
             FROM 
                 marsapp
             WHERE 
@@ -153,18 +184,39 @@ def get_values_of_month():
         temperatures = [str(0) for i in range(0, 31)]
         humidities = [str(0) for i in range(0, 31)]
         lux_values = [str(0) for i in range(0, 31)]
+        max_tempartures = [str(0) for i in range(0, 31)]
+        min_tempartures = [str(0) for i in range(0, 31)]
+        max_humidity = [str(0) for i in range(0, 31)]
+        min_humidity = [str(0) for i in range(0, 31)]
+
+
         print(result)
         
         for row in result:
+<<<<<<< HEAD
             temperatures[row[0]] = row[1]
             humidities[row[0]] = row[2]
             lux_values[row[0]] = row[3]
         
+=======
+            temperatures[row[0]]=row[1]
+            humidities[row[0]]=row[2]
+            lux_values[row[0]]=row[3]
+            max_tempartures[row[0]]=row[4]
+            min_tempartures[row[0]]=row[5]
+            max_humidity[row[0]]=row[6]
+            min_humidity[row[0]]=row[7]
+
+>>>>>>> 06f1725 (original push)
         result_object = {
             'days': days,
             'temperatures': temperatures,
             'humidities': humidities,
-            'lux_values': lux_values
+            'lux_values': lux_values,
+            'max_tempartures':max_tempartures,
+            'min_tempartures':min_tempartures,
+            'max_humidity':max_humidity,
+            'min_humidity':min_humidity
         }
 
         return json.dumps(result_object)
@@ -178,4 +230,9 @@ if __name__ == '__main__':
     schedule_thread = threading.Thread(target=run_schedule)
     schedule_thread.start()
 
+<<<<<<< HEAD
     app.run(host="0.0.0.0", debug=True)
+=======
+    # Démarrer l'application Flask
+    app.run(host="0.0.0.0",debug=False)
+>>>>>>> 06f1725 (original push)

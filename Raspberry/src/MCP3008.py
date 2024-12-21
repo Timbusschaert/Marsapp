@@ -1,32 +1,28 @@
-import busio
-import digitalio
-import board
-from adafruit_mcp3xxx.mcp3008 import MCP3008
-from adafruit_mcp3xxx.analog_in import AnalogIn
+from spidev import SpiDev
 
-class MCP3008Reader:
-    def __init__(self, channel):
-        # Créer le bus SPI
-        spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
+class MCP3008:
+	def __init__(self,bus = 0 , device = 0):
+		self.bus, self.device = bus , device
+		self.spi = SpiDev()
+		self.open()
+		self.spi.max_speed_hz = 1000000
+	def open(self):
+		self.spi.open(self.bus,self.device)
+		self.spi.max_speed_hz = 1000000
 
-        # Créer le chip select (CS)
-        cs = digitalio.DigitalInOut(board.D18)  # Modifier selon votre câblage
+	def read(self,channel = 0 ):
+		adc = self.spi.xfer2([1,(8 + channel) << 4,0])
+		data = ((adc[1] & 3) << 8 ) + adc [2]
+		return data /1024 * 100
 
-        # Créer l'objet MCP3008
-        self.mcp = MCP3008(spi, cs)
+	def close(self):
+		self.spi.close()
 
-        # Créer un objet AnalogIn sur le canal spécifié
-        self.channel = AnalogIn(self.mcp, channel)
 
-    def read_value(self):
-        # Lire la valeur du canal
-        return self.channel.value
-
-    def read_voltage(self):
-        # Lire la tension du canal
-        return self.channel.voltage
 
 if __name__ == "__main__":
-    test = MCP3008Reader(5)
-    print(test.read_value())
-
+	adc = MCP3008()
+	while True :
+		value = adc.read(channel = 0)
+		print(str((value/1024 * 100)) + "%")
+ 
